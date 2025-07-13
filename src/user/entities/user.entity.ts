@@ -2,14 +2,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
-  OneToOne,
   PrimaryGeneratedColumn,
-  Unique,
   UpdateDateColumn,
 } from 'typeorm';
 import { UserType } from '../enums/user-type.enum';
-import { Driver } from 'src/driver/entities/driver.entity';
+import { Length, Min } from 'class-validator';
+import { Exclude, Expose, Transform } from 'class-transformer';
 
 @Entity()
 export class User {
@@ -17,6 +15,7 @@ export class User {
   id: number;
 
   @Column()
+  @Transform(({ value }) => value.toUpperCase())
   firstName: string;
 
   @Column()
@@ -33,14 +32,17 @@ export class User {
   user_type: UserType;
 
   @Column()
-  phone_number: number;
+  @Length(10, 15)
+  phone_number: string;
 
   @Column()
+  @Exclude()
   password: string;
 
-  @OneToOne(() => Driver, (driver) => driver.user)
-  @JoinColumn()
-  driver: Driver;
+  @Expose()
+  get fullName(): String {
+    return `${this.firstName} ${this.lastName}`;
+  }
 
   @CreateDateColumn()
   createdAt: Date;

@@ -1,6 +1,4 @@
 export enum UserType {
-  SHIPPER = 'shipper',
-  CARRIER = 'carrier',
-  DRIVER = 'driver',
+  USER = 'user',
   ADMIN = 'admin',
 }

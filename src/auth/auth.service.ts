@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { instanceToPlain } from 'class-transformer';
 import { User } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
 
@@ -10,26 +11,31 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<User | null> {
-    return this.userService.validateUser(email, password);
+  async login(
+    user: User,
+  ): Promise<{ access_token: string; user: Record<string, any> }> {
+    try {
+      const payload = {
+        name: `${user.firstName} ${user.lastName}`,
+        sub: user.id,
+      };
+
+      const accessToken = await this.jwtService.sign(payload);
+
+      const userData = instanceToPlain(user, {
+        excludePrefixes: ['password'],
+      });
+
+      return {
+        user: userData,
+        access_token: accessToken,
+      };
+    } catch (error) {
+      throw new Error(`Login failed: ${error.message}`);
+    }
   }
 
-  async login(user: User) {
-    const validatedUser = await this.userService.validateUser(
-      user.email,
-      user.password,
-    );
-
-    const payload = {
-      sub: validatedUser.id,
-      user_name: validatedUser.firstName + ' ' + validatedUser.lastName,
-    };
-
-    const access_token = this.jwtService.sign(payload);
-
-    return {
-      ...validatedUser,
-      access_token,
-    };
+  validateUser(email: string, password: string) {
+    return this.userService.validateUser(email, password);
   }
 }

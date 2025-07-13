@@ -15,11 +15,11 @@ export class CreateUserDto {
 
   @IsEnum(UserType)
   @IsNotEmpty()
-  role: UserType;
+  user_type: UserType;
 
-  @IsInt()
+  @IsString()
   @IsNotEmpty()
-  phone_number: number;
+  phone_number: string;
 
   @IsString()
   @IsNotEmpty()
