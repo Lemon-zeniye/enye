@@ -25,7 +25,7 @@ export class UserController {
   }
 
   @Public()
-  @Post()
+  @Post('/register')
   createUser(@Body() createUserDto: CreateUserDto) {
     return this.userService.createUser(createUserDto);
   }
