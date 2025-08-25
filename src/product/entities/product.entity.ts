@@ -3,6 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -10,6 +11,7 @@ import {
 import { Gender } from '../enums/gender-type.enum';
 import { ProductVariant } from './product-variant.entity';
 import { ProductImage } from './product-image.entity';
+import { Group } from 'src/groups/entities/group.entity';
 
 @Entity()
 export class Product {
@@ -24,6 +26,9 @@ export class Product {
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   base_price: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  old_price?: number;
 
   @ManyToOne(() => Category, (category) => category.products, {
     nullable: true,
@@ -47,20 +52,15 @@ export class Product {
   })
   gender: Gender;
 
-  @Column({ nullable: true })
-  material?: string;
+  @Column({ type: 'json', nullable: true })
+  material?: string[];
 
-  @Column({ type: 'text', nullable: true })
-  care_instructions?: string;
+  @Column({ type: 'json', nullable: true })
+  care_instructions?: string[];
+
+  @ManyToMany(() => Group, (group) => group.products)
+  groups: Group[];
 
   @CreateDateColumn()
   created_at: Date;
 }
-
-// UsersModule → handles the Users table.
-
-// CategoriesModule → handles categories and optionally Size_Guide.
-
-// ProductsModule → handles Products, Product_Variants, Product_Images.
-
-// AttributesModule → handles Product_Attributes, Attribute_Values, Variant_Attributes.

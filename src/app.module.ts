@@ -8,6 +8,9 @@ import { AuthModule } from './auth/auth.module';
 import { CategoryModule } from './category/category.module';
 import { ProductModule } from './product/product.module';
 import { AttributeModule } from './attribute/attribute.module';
+import { GroupsModule } from './groups/groups.module';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/guard/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -29,8 +32,15 @@ import { AttributeModule } from './attribute/attribute.module';
     CategoryModule,
     ProductModule,
     AttributeModule,
+    GroupsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard, // 👈 global guard
+    },
+  ],
 })
 export class AppModule {}

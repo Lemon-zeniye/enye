@@ -1,6 +1,5 @@
 import {
   Column,
-  CreateDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
@@ -21,7 +20,10 @@ export class ProductVariant {
   })
   product: Product;
 
-  @Column({ type: 'varchar', length: 1000, unique: true }) // Stock Keeping Unit
+  @Column()
+  productId: number; // Added product ID field
+
+  @Column({ type: 'varchar', length: 1000, unique: true })
   sku: string;
 
   @Column({
@@ -32,8 +34,13 @@ export class ProductVariant {
   })
   price_adjustment: number;
 
-  @OneToMany(() => ProductImage, (image) => image.product_variant)
-  product_images: ProductImage[];
+  @Column({
+    type: 'decimal',
+    scale: 2,
+    precision: 10,
+    nullable: true,
+  })
+  old_price_adjustment?: number;
 
   @Column({ default: 0 })
   stock_quantity: number;
@@ -41,6 +48,13 @@ export class ProductVariant {
   @Column({ nullable: true })
   image_url?: string;
 
-  @OneToMany(() => VariantAttribute, (va) => va.variant)
+  @OneToMany(() => ProductImage, (image) => image.product_variant, {
+    cascade: true,
+  })
+  product_images: ProductImage[];
+
+  @OneToMany(() => VariantAttribute, (va) => va.variant, {
+    cascade: true,
+  })
   variantAttributes: VariantAttribute[];
 }

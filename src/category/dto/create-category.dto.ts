@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import {
   IsInt,
   IsNotEmpty,
@@ -17,11 +18,12 @@ export class CreateCategoryDto {
   description?: string;
 
   @IsOptional()
-  @IsUrl()
+  @IsString()
   image_url?: string;
 
   @IsOptional()
   @IsInt()
   @Min(1)
+  @Transform(({ value }) => parseInt(value, 10))
   parent_category_id?: number;
 }

@@ -15,7 +15,7 @@ export class ProductImage {
 
   @ManyToOne(() => ProductVariant, (variant) => variant.product_images, {
     nullable: true,
-    onDelete: 'SET NULL',
+    onDelete: 'CASCADE',
   })
   product_variant?: ProductVariant;
 
@@ -30,4 +30,7 @@ export class ProductImage {
 
   @Column({ default: 0 })
   display_order: number;
+
+  @Column({ nullable: true })
+  product_variant_id?: number;
 }
