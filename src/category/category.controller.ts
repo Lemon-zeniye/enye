@@ -15,6 +15,7 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { Category } from './entities/category.entity';
 @Controller('category')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
@@ -49,17 +50,40 @@ export class CategoryController {
     return this.categoryService.findAll();
   }
 
+  @Get('nested')
+  async getNestedCategories(): Promise<Category[]> {
+    return this.categoryService.getNestedCategories();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.categoryService.findOne(+id);
   }
-
   @Patch(':id')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: './uploads/categories',
+        filename: (req, file, cb) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          cb(null, `category-${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  )
   update(
     @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
     @Body() updateCategoryDto: UpdateCategoryDto,
   ) {
-    return this.categoryService.update(+id, updateCategoryDto);
+    const imageUrl = file ? `/uploads/categories/${file.filename}` : undefined;
+
+    return this.categoryService.update(+id, {
+      ...updateCategoryDto,
+      ...(imageUrl && { image_url: imageUrl }), // Only add image_url if file exists
+    });
   }
 
   @Delete(':id')

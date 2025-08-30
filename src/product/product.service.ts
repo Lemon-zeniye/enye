@@ -90,7 +90,15 @@ export class ProductService {
   async findOne(id: number): Promise<Product> {
     const product = await this.productRepository.findOne({
       where: { id },
-      relations: ['category'],
+      relations: [
+        'category',
+        'product_images',
+        'product_variants',
+        'product_variants.product_images',
+        'product_variants.variantAttributes',
+        'product_variants.variantAttributes.value', // 👈 load attribute value
+        'groups',
+      ],
     });
 
     if (!product) {
@@ -107,6 +115,7 @@ export class ProductService {
     const product = await this.findOne(id);
 
     let category: Category | null = product.category;
+    let groups: Group[] | null = null;
 
     if (updateProductDto.category_id !== undefined) {
       if (updateProductDto.category_id === null) {
@@ -123,9 +132,20 @@ export class ProductService {
       }
     }
 
+    if (updateProductDto.groupIds?.length) {
+      groups = await this.groupRepository.findBy({
+        id: In(updateProductDto.groupIds),
+      });
+
+      if (groups.length !== updateProductDto.groupIds.length) {
+        throw new NotFoundException(`One or more groups not found`);
+      }
+    }
+
     const updatedProduct = this.productRepository.merge(product, {
       ...updateProductDto,
       category,
+      groups,
       material:
         updateProductDto.material !== undefined
           ? updateProductDto.material
@@ -313,6 +333,7 @@ export class ProductService {
         'variantAttributes',
         'variantAttributes.value',
         'variantAttributes.value.attribute',
+        'product_images',
       ],
     });
   }
@@ -396,7 +417,7 @@ export class ProductService {
     });
   }
 
-  async removeImage(productId: number, imageId: number): Promise<void> {
+  async removeImage(productId: number, imageId: number): Promise<any> {
     await this.findOne(productId); // Verify product exists
 
     const image = await this.imageRepository.findOne({
@@ -410,6 +431,7 @@ export class ProductService {
     }
 
     await this.imageRepository.remove(image);
+    return image;
   }
 
   async setImageAsPrimary(

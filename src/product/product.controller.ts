@@ -26,6 +26,7 @@ import { ProductVariant } from './entities/product-variant.entity';
 import { ProductImage } from './entities/product-image.entity';
 import { UpdateProductVariantDto } from './dto/update-product-variant.dto';
 import { AddVariantImagesDto } from './dto/add-variant-images.dto';
+import { Public } from 'src/auth/decorator/public.decorator';
 
 @Controller('products')
 export class ProductController {
@@ -60,6 +61,7 @@ export class ProductController {
     return this.productService.findByGender(gender);
   }
 
+  @Public()
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number): Promise<Product> {
     return this.productService.findOne(id);
@@ -256,7 +258,6 @@ export class ProductController {
   }
 
   @Delete(':id/images/:imageId')
-  @HttpCode(HttpStatus.NO_CONTENT)
   async removeImage(
     @Param('id', ParseIntPipe) productId: number,
     @Param('imageId', ParseIntPipe) imageId: number,

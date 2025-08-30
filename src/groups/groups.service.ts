@@ -121,7 +121,6 @@ export class GroupsService {
     limit: number = 10,
     productsPerGroup: number = 10,
   ): Promise<{ groups: Group[]; total: number }> {
-    console.log('333333333333');
     // First get paginated groups
     const [groups, total] = await this.groupsRepository
       .createQueryBuilder('group')
@@ -204,5 +203,16 @@ export class GroupsService {
       .getMany();
 
     return { group, products, total };
+  }
+
+  async toggleIsActive(id: number, isActive: boolean) {
+    const group = await this.groupsRepository.findOne({ where: { id } });
+
+    if (!group) {
+      throw new NotFoundException(`Group with id ${id} not found`);
+    }
+
+    group.isActive = isActive; // update field directly
+    return this.groupsRepository.save(group);
   }
 }

@@ -26,6 +26,65 @@ import { Public } from 'src/auth/decorator/public.decorator';
 export class GroupsController {
   constructor(private readonly groupsService: GroupsService) {}
 
+  @Public()
+  @Get('list')
+  async getGroupsWithProducts(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('products') productsPerGroup?: string,
+  ) {
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 10;
+    const productsNum = productsPerGroup ? parseInt(productsPerGroup, 10) : 10;
+
+    const result = await this.groupsService.findGroupsWithProductsPaginated(
+      pageNum,
+      limitNum,
+      productsNum,
+    );
+
+    return {
+      groups: result.groups,
+      total: result.total,
+      page: pageNum,
+      limit: limitNum,
+      productsPerGroup: productsNum,
+      totalPages: Math.ceil(result.total / limitNum),
+    };
+  }
+
+  @Public()
+  @Get(':id/products-list')
+  async getGroupProducts(
+    @Param('id', ParseIntPipe) groupId: number,
+    @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
+  ): Promise<{
+    group: Group;
+    products: Product[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const result = await this.groupsService.findGroupWithProductsPaginated(
+      groupId,
+      page,
+      limit,
+    );
+
+    const totalPages = Math.ceil(result.total / limit);
+
+    return {
+      group: result.group,
+      products: result.products,
+      total: result.total,
+      page,
+      limit,
+      totalPages,
+    };
+  }
+
   @Post()
   create(@Body() createGroupDto: CreateGroupDto) {
     return this.groupsService.create(createGroupDto);
@@ -78,64 +137,11 @@ export class GroupsController {
     );
   }
 
-  // 1. Get paginated groups with fixed limit of products per group
-  @Public()
-  @Get('list')
-  async getGroupsWithProducts(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('products') productsPerGroup?: string,
+  @Post(':id/isActive')
+  toggleIsActive(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() isActive: boolean,
   ) {
-    const pageNum = page ? parseInt(page, 10) : 1;
-    const limitNum = limit ? parseInt(limit, 10) : 10;
-    const productsNum = productsPerGroup ? parseInt(productsPerGroup, 10) : 10;
-
-    const result = await this.groupsService.findGroupsWithProductsPaginated(
-      pageNum,
-      limitNum,
-      productsNum,
-    );
-
-    return {
-      groups: result.groups,
-      total: result.total,
-      page: pageNum,
-      limit: limitNum,
-      productsPerGroup: productsNum,
-      totalPages: Math.ceil(result.total / limitNum),
-    };
-  }
-
-  // 2. Get specific group with paginated products
-  @Public()
-  @Get(':id/products-list')
-  async getGroupProducts(
-    @Param('id', ParseIntPipe) groupId: number,
-    @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
-    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
-  ): Promise<{
-    group: Group;
-    products: Product[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  }> {
-    const result = await this.groupsService.findGroupWithProductsPaginated(
-      groupId,
-      page,
-      limit,
-    );
-
-    const totalPages = Math.ceil(result.total / limit);
-
-    return {
-      group: result.group,
-      products: result.products,
-      total: result.total,
-      page,
-      limit,
-      totalPages,
-    };
+    return this.groupsService.toggleIsActive(id, isActive);
   }
 }

@@ -8,6 +8,8 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from './entities/category.entity';
 import { Repository, TreeRepository, DataSource } from 'typeorm';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class CategoryService {
@@ -25,12 +27,25 @@ export class CategoryService {
     if (parent_category_id) {
       parentCategory = await this.categoryRepository.findOne({
         where: { id: parent_category_id },
+        relations: ['parent_category'],
       });
 
       if (!parentCategory) {
         throw new NotFoundException(
           `Parent category with id ${parent_category_id} not found`,
         );
+      }
+
+      // Count depth
+      let depth = 1;
+      let current = parentCategory;
+      while (current.parent_category) {
+        depth++;
+        current = current.parent_category;
+      }
+
+      if (depth >= 3) {
+        throw new Error('Cannot create category deeper than 3 levels');
       }
     }
 
@@ -44,6 +59,13 @@ export class CategoryService {
 
   async findAll() {
     return await this.categoryRepository.findTrees();
+  }
+
+  async getNestedCategories(): Promise<Category[]> {
+    const treeRepo: TreeRepository<Category> =
+      this.categoryRepository.manager.getTreeRepository(Category);
+    const categories = await treeRepo.findTrees();
+    return categories;
   }
 
   async findOne(id: number) {
@@ -83,6 +105,14 @@ export class CategoryService {
 
       if (parent_category_id === id) {
         throw new BadRequestException(`A category cannot be its own parent.`);
+      }
+    }
+
+    if (updateCategoryDto.image_url && category.image_url) {
+      // Delete the old image file
+      const oldImagePath = path.join(process.cwd(), category.image_url);
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
       }
     }
 

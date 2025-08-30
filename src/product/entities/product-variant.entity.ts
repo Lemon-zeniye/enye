@@ -34,13 +34,13 @@ export class ProductVariant {
   })
   price_adjustment: number;
 
-  @Column({
-    type: 'decimal',
-    scale: 2,
-    precision: 10,
-    nullable: true,
-  })
-  old_price_adjustment?: number;
+  // @Column({
+  //   type: 'decimal',
+  //   scale: 2,
+  //   precision: 10,
+  //   nullable: true,
+  // })
+  // old_price_adjustment?: number;
 
   @Column({ default: 0 })
   stock_quantity: number;

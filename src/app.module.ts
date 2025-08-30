@@ -11,6 +11,7 @@ import { AttributeModule } from './attribute/attribute.module';
 import { GroupsModule } from './groups/groups.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guard/jwt-auth.guard';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -33,14 +34,9 @@ import { JwtAuthGuard } from './auth/guard/jwt-auth.guard';
     ProductModule,
     AttributeModule,
     GroupsModule,
+    ChatModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard, // 👈 global guard
-    },
-  ],
+  providers: [AppService],
 })
 export class AppModule {}
