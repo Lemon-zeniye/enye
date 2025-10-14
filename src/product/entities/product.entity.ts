@@ -12,6 +12,7 @@ import { Gender } from '../enums/gender-type.enum';
 import { ProductVariant } from './product-variant.entity';
 import { ProductImage } from './product-image.entity';
 import { Group } from 'src/groups/entities/group.entity';
+import { OrderItem } from 'src/order/entities/orderItem.entity';
 
 @Entity()
 export class Product {
@@ -41,6 +42,9 @@ export class Product {
 
   @OneToMany(() => ProductImage, (images) => images.product)
   product_images: ProductImage[];
+
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.product)
+  orderItems: OrderItem[];
 
   @Column({ default: true })
   is_active: boolean;

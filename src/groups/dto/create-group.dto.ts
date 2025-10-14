@@ -7,12 +7,14 @@ import {
   IsArray,
   ArrayMinSize,
   MaxLength,
+  MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateGroupDto {
   @IsString()
   @MaxLength(100)
+  @MinLength(3)
   name: string;
 
   @IsOptional()
@@ -24,9 +26,8 @@ export class CreateGroupDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @IsOptional()
   @IsNumber()
-  sortOrder?: number;
+  sortOrder: number;
 
   @IsOptional()
   @IsArray()

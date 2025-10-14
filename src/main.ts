@@ -5,6 +5,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { writeFileSync } from 'fs';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -26,7 +27,7 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: ['http://localhost:3000'], // your frontend URL
+    origin: '*', // your frontend URL
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true, // if you use cookies or authentication
   });
@@ -47,6 +48,9 @@ async function bootstrap() {
 
   // Export Swagger spec → so you can import into Postman
   writeFileSync('./swagger-spec.json', JSON.stringify(document));
+
+  // Global error filter
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   await app.listen(4000);
 }

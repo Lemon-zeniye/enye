@@ -16,6 +16,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { Category } from './entities/category.entity';
+import { Public } from 'src/auth/decorator/public.decorator';
 @Controller('category')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
@@ -53,6 +54,18 @@ export class CategoryController {
   @Get('nested')
   async getNestedCategories(): Promise<Category[]> {
     return this.categoryService.getNestedCategories();
+  }
+
+  @Public()
+  @Get('topCategories')
+  async getTopCategories() {
+    return this.categoryService.getTopCategories();
+  }
+
+  @Public()
+  @Get('navCategories')
+  async getNavCategories() {
+    return this.categoryService.getNavCategories();
   }
 
   @Get(':id')

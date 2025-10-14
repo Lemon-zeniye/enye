@@ -24,7 +24,7 @@ export class Group {
   @Column({ default: true })
   isActive: boolean;
 
-  @Column({ default: 0 })
+  @Column({ default: 0, unique: true })
   sortOrder: number;
 
   @CreateDateColumn()

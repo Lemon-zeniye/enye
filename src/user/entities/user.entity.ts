@@ -2,12 +2,27 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { UserType } from '../enums/user-type.enum';
 import { Length, Min } from 'class-validator';
 import { Exclude, Expose, Transform } from 'class-transformer';
+import { Order } from 'src/order/entities/order.entity';
+
+export enum SignupMethod {
+  FORM = 'form',
+  GOOGLE = 'google',
+  FACEBOOK = 'facebook',
+  APPLE = 'apple',
+}
+
+export enum UserStatus {
+  ACTIVE = 'active',
+  BLOCKED = 'blocked',
+  INACTIVE = 'inactive',
+}
 
 @Entity()
 export class User {
@@ -16,10 +31,7 @@ export class User {
 
   @Column()
   @Transform(({ value }) => value.toUpperCase())
-  firstName: string;
-
-  @Column()
-  lastName: string;
+  fullName: string;
 
   @Column({ unique: true })
   email: string;
@@ -31,18 +43,30 @@ export class User {
   })
   user_type: UserType;
 
-  @Column()
+  @OneToMany(() => Order, (order) => order.user)
+  orders: Order[];
+
+  @Column({ nullable: true })
   @Length(10, 15)
   phone_number: string;
 
-  @Column()
+  @Column({ nullable: true })
   @Exclude()
   password: string;
 
-  @Expose()
-  get fullName(): String {
-    return `${this.firstName} ${this.lastName}`;
-  }
+  @Column({
+    type: 'enum',
+    enum: SignupMethod,
+    default: SignupMethod.FORM,
+  })
+  signup_method: SignupMethod;
+
+  @Column({
+    type: 'enum',
+    enum: UserStatus,
+    default: UserStatus.ACTIVE,
+  })
+  status: UserStatus;
 
   @CreateDateColumn()
   createdAt: Date;

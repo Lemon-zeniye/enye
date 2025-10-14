@@ -3,9 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
   Tree,
   TreeChildren,
@@ -26,6 +24,9 @@ export class Category {
 
   @Column({ nullable: true })
   image_url: string;
+
+  @Column({ default: false })
+  show_on_nav: boolean;
 
   @TreeParent()
   parent_category?: Category;

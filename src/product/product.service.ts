@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './entities/product.entity';
@@ -211,6 +211,53 @@ export class ProductService {
       .getMany();
   }
 
+  async getRelatedProducts(productId: number): Promise<Product[]> {
+    const currentProduct = await this.productRepository.findOne({
+      where: { id: productId },
+      relations: ['category'],
+    });
+
+    if (!currentProduct) {
+      throw new NotFoundException('Product not found');
+    }
+
+    let relatedProducts: Product[] = [];
+
+    // Try to get products from same category first
+    if (currentProduct.category) {
+      relatedProducts = await this.productRepository.find({
+        where: {
+          category: { id: currentProduct.category.id },
+          is_active: true,
+          id: Not(productId),
+        },
+        relations: ['category', 'product_images'],
+        take: 8,
+        order: { created_at: 'DESC' },
+      });
+    }
+
+    // If not enough products from same category, fill with recent active products
+    if (relatedProducts.length < 8) {
+      const additionalProducts = await this.productRepository.find({
+        where: {
+          is_active: true,
+          id: Not(productId),
+          ...(relatedProducts.length > 0 && {
+            id: Not(In(relatedProducts.map((p) => p.id))),
+          }),
+        },
+        relations: ['category', 'product_images'],
+        take: 8 - relatedProducts.length,
+        order: { created_at: 'DESC' },
+      });
+
+      relatedProducts = [...relatedProducts, ...additionalProducts];
+    }
+
+    return relatedProducts;
+  }
+
   // Variant methods
 
   async findVariant(variantId: number): Promise<ProductVariant> {
@@ -308,6 +355,17 @@ export class ProductService {
     if (result.affected === 0) {
       throw new NotFoundException(`Image with ID ${imageId} not found`);
     }
+  }
+
+  async toggleIsActive(id: number, isActive: boolean) {
+    const product = await this.productRepository.findOne({ where: { id } });
+
+    if (!product) {
+      throw new NotFoundException(`Product with id ${id} not found`);
+    }
+
+    product.is_active = isActive;
+    return this.productRepository.save(product);
   }
 
   // async createVariant(

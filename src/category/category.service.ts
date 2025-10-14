@@ -7,7 +7,7 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from './entities/category.entity';
-import { Repository, TreeRepository, DataSource } from 'typeorm';
+import { Repository, TreeRepository, DataSource, IsNull } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -132,6 +132,22 @@ export class CategoryService {
     }
 
     return this.categoryRepository.remove(category);
+  }
+
+  async getTopCategories(): Promise<Category[]> {
+    return this.categoryRepository.find({
+      where: { parent_category: IsNull() },
+      order: { created_at: 'DESC' },
+      take: 6,
+    });
+  }
+
+  async getNavCategories(): Promise<Category[]> {
+    return this.categoryRepository.find({
+      where: { show_on_nav: true },
+      order: { created_at: 'DESC' },
+      relations: ['children'],
+    });
   }
 
   // Optional: Method to rebuild tree structure (useful for testing)

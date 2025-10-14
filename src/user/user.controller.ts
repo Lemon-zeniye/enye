@@ -18,9 +18,8 @@ import { Public } from 'src/auth/decorator/public.decorator';
 @Controller('user')
 export class UserController {
   constructor(private userService: UserService) {}
-  // @UseInterceptors(ClassSerializerInterceptor)
   @Get()
-  getAllUser(@Req() req) {
+  getAllUser() {
     return this.userService.getAllUser();
   }
 

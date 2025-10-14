@@ -19,15 +19,28 @@ export class UserService {
   ) {}
 
   async getAllUser() {
-    return await this.userRepository.find();
+    return await this.userRepository.find({ relations: ['orders'] });
   }
 
   async createUser(createUserDto: CreateUserDto) {
-    const hashPassword = await bcrypt.hash(createUserDto.password, 10);
-    const user = { ...createUserDto, password: hashPassword };
+    let hashedPassword: string | undefined;
+
+    if (createUserDto.password) {
+      hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    }
+
+    const user = {
+      ...createUserDto,
+      password: hashedPassword,
+    };
 
     const savedUser = await this.userRepository.save(user);
     return instanceToPlain(savedUser);
+  }
+
+  async findUserByEmail(email: string) {
+    const user = await this.userRepository.findOne({ where: { email } });
+    return instanceToPlain(user);
   }
 
   async validateUser(email: string, password: string): Promise<User> {

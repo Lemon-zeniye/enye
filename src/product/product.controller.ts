@@ -27,6 +27,11 @@ import { ProductImage } from './entities/product-image.entity';
 import { UpdateProductVariantDto } from './dto/update-product-variant.dto';
 import { AddVariantImagesDto } from './dto/add-variant-images.dto';
 import { Public } from 'src/auth/decorator/public.decorator';
+import { UploadImagesInterceptor } from 'src/common/interceptors/upload.interceptor';
+
+interface ToggleIsActiveDto {
+  isActive: boolean;
+}
 
 @Controller('products')
 export class ProductController {
@@ -62,6 +67,12 @@ export class ProductController {
   }
 
   @Public()
+  @Get(':id/related')
+  async getRelatedProducts(@Param('id') id: string) {
+    return this.productService.getRelatedProducts(+id);
+  }
+
+  @Public()
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number): Promise<Product> {
     return this.productService.findOne(id);
@@ -91,6 +102,14 @@ export class ProductController {
     return this.productService.restore(id);
   }
 
+  @Post(':id/isActive')
+  toggleIsActive(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: ToggleIsActiveDto,
+  ) {
+    return this.productService.toggleIsActive(id, body.isActive);
+  }
+
   // Variant endpoints
   @Post(':id/variants')
   @HttpCode(HttpStatus.CREATED)
@@ -103,29 +122,7 @@ export class ProductController {
 
   // product.controller.ts
   @Post('variants/:variantId/images')
-  @UseInterceptors(
-    FilesInterceptor('images', 10, {
-      storage: diskStorage({
-        destination: './uploads/products',
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = extname(file.originalname);
-          cb(null, `variant-${uniqueSuffix}${ext}`);
-        },
-      }),
-      fileFilter: (req, file, cb) => {
-        if (file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
-          cb(null, true);
-        } else {
-          cb(new BadRequestException('Only image files are allowed!'), false);
-        }
-      },
-      limits: {
-        fileSize: 5 * 1024 * 1024,
-      },
-    }),
-  )
+  @UploadImagesInterceptor('images', 5, './uploads/avatars')
   @HttpCode(HttpStatus.CREATED)
   async addVariantImages(
     @Param('variantId', ParseIntPipe) variantId: number,

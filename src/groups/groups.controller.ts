@@ -12,6 +12,7 @@ import {
   ValidationPipe,
   Query,
   DefaultValuePipe,
+  UseGuards,
 } from '@nestjs/common';
 import { GroupsService } from './groups.service';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -20,8 +21,16 @@ import { AddProductsDto } from './dto/add-products.dto';
 import { Group } from './entities/group.entity';
 import { Product } from 'src/product/entities/product.entity';
 import { Public } from 'src/auth/decorator/public.decorator';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Role } from 'src/auth/roles.enum';
+import { Roles } from 'src/auth/decorator/roles.decorator';
+
+interface ToggleIsActiveDto {
+  isActive: boolean;
+}
 
 @Controller('groups')
+@UseGuards(RolesGuard)
 @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 export class GroupsController {
   constructor(private readonly groupsService: GroupsService) {}
@@ -35,7 +44,7 @@ export class GroupsController {
   ) {
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 10;
-    const productsNum = productsPerGroup ? parseInt(productsPerGroup, 10) : 10;
+    const productsNum = productsPerGroup ? parseInt(productsPerGroup, 10) : 12;
 
     const result = await this.groupsService.findGroupsWithProductsPaginated(
       pageNum,
@@ -91,6 +100,7 @@ export class GroupsController {
   }
 
   @Get()
+  @Roles(Role.USER)
   findAll() {
     return this.groupsService.findAll();
   }
@@ -140,8 +150,8 @@ export class GroupsController {
   @Post(':id/isActive')
   toggleIsActive(
     @Param('id', ParseIntPipe) id: number,
-    @Body() isActive: boolean,
+    @Body() body: ToggleIsActiveDto,
   ) {
-    return this.groupsService.toggleIsActive(id, isActive);
+    return this.groupsService.toggleIsActive(id, body.isActive);
   }
 }

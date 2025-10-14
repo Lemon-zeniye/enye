@@ -135,9 +135,6 @@ export class GroupsService {
       return { groups: [], total: 0 };
     }
 
-    // Get product IDs for each group using subquery
-    const groupIds = groups.map((group) => group.id);
-
     // Get limited products for each group
     const groupsWithProducts = await Promise.all(
       groups.map(async (group) => {
@@ -180,13 +177,16 @@ export class GroupsService {
     }
 
     // Get total product count for the group
-    const total = await this.groupsRepository
+    const total_cont = await this.groupsRepository
       .createQueryBuilder('group')
       .innerJoin('group.products', 'product')
       .where('group.id = :groupId', { groupId })
       .andWhere('group.isActive = :isActive', { isActive: true })
       .andWhere('product.is_active = :productActive', { productActive: true })
-      .getCount();
+      .select('COUNT(product.id)', 'count')
+      .getRawOne();
+
+    const total = parseInt(total_cont.count);
 
     // Get paginated products for the group
     const products = await this.groupsRepository.manager
@@ -212,7 +212,7 @@ export class GroupsService {
       throw new NotFoundException(`Group with id ${id} not found`);
     }
 
-    group.isActive = isActive; // update field directly
+    group.isActive = isActive;
     return this.groupsRepository.save(group);
   }
 }

@@ -1,27 +1,36 @@
-import { IsEmail, IsEnum, IsInt, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { UserType } from '../enums/user-type.enum';
+import { SignupMethod } from '../entities/user.entity';
 
 export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
-  firstName: string;
-
-  @IsString()
-  lastName: string;
+  fullName: string;
 
   @IsEmail()
   @IsNotEmpty()
   email: string;
 
   @IsEnum(UserType)
-  @IsNotEmpty()
-  user_type: UserType;
+  @IsOptional()
+  user_type?: UserType;
+
+  @IsEnum(SignupMethod)
+  @IsOptional()
+  signup_method?: SignupMethod;
 
   @IsString()
-  @IsNotEmpty()
-  phone_number: string;
+  @IsOptional()
+  phone_number?: string;
 
   @IsString()
-  @IsNotEmpty()
-  password: string;
+  @IsOptional()
+  password?: string;
 }
