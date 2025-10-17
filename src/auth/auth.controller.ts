@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   HttpCode,
@@ -15,6 +16,8 @@ import { User } from 'src/user/entities/user.entity';
 import { Public } from './decorator/public.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtService } from '@nestjs/jwt';
+import { SignupDto } from './dto/signup.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -47,6 +50,27 @@ export class AuthController {
     const token = this.jwtService.sign(payload);
 
     // Redirect to frontend with token
-    return res.redirect(`http://localhost:3001/callback?token=${token}`);
+    return res.redirect(
+      `http://localhost:3001/callback?token=${token}&user_id=${user.id}`,
+    );
+  }
+  @Public()
+  @Post('signup')
+  async signup(@Body() signupDto: SignupDto) {
+    return this.authService.signup(signupDto);
+  }
+
+  @Public()
+  @Post('verify-otp')
+  @HttpCode(HttpStatus.OK)
+  async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
+    return this.authService.verifyOtp(verifyOtpDto);
+  }
+
+  @Public()
+  @Post('resend-otp')
+  @HttpCode(HttpStatus.OK)
+  async resendOtp(@Body('email') email: string) {
+    return this.authService.resendOtp(email);
   }
 }

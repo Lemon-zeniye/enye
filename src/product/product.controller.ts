@@ -28,6 +28,7 @@ import { UpdateProductVariantDto } from './dto/update-product-variant.dto';
 import { AddVariantImagesDto } from './dto/add-variant-images.dto';
 import { Public } from 'src/auth/decorator/public.decorator';
 import { UploadImagesInterceptor } from 'src/common/interceptors/upload.interceptor';
+import { Category } from 'src/category/entities/category.entity';
 
 interface ToggleIsActiveDto {
   isActive: boolean;
@@ -49,9 +50,17 @@ export class ProductController {
     return this.productService.findAll();
   }
 
+  @Public()
   @Get('search')
-  search(@Query('q') query: string): Promise<Product[]> {
-    return this.productService.searchProducts(query);
+  async search(
+    @Query('q') query: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<{ products: Product[]; total: number; hasMore: boolean }> {
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 10;
+
+    return this.productService.searchProducts(query, pageNum, limitNum);
   }
 
   @Get('category/:categoryId')
@@ -108,6 +117,38 @@ export class ProductController {
     @Body() body: ToggleIsActiveDto,
   ) {
     return this.productService.toggleIsActive(id, body.isActive);
+  }
+
+  @Public()
+  @Get(':cat_id/list_products')
+  async getCategoryProducts(
+    @Param('cat_id', ParseIntPipe) category_id: number,
+    @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
+  ): Promise<{
+    category: Category;
+    products: Product[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const result = await this.productService.findCategoryWithPaginatedProducts(
+      category_id,
+      page,
+      limit,
+    );
+
+    const totalPages = Math.ceil(result.total / limit);
+
+    return {
+      category: result.category,
+      products: result.products,
+      total: result.total,
+      page,
+      limit,
+      totalPages,
+    };
   }
 
   // Variant endpoints

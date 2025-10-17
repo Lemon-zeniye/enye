@@ -7,7 +7,7 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from './entities/category.entity';
-import { Repository, TreeRepository, DataSource, IsNull } from 'typeorm';
+import { TreeRepository, IsNull } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -16,7 +16,6 @@ export class CategoryService {
   constructor(
     @InjectRepository(Category)
     private readonly categoryRepository: TreeRepository<Category>,
-    private readonly dataSource: DataSource, // Inject DataSource
   ) {}
 
   async create(createCategoryDto: CreateCategoryDto) {

@@ -8,6 +8,8 @@ import {
   Delete,
   UseInterceptors,
   UploadedFile,
+  ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -17,6 +19,7 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { Category } from './entities/category.entity';
 import { Public } from 'src/auth/decorator/public.decorator';
+import { Product } from 'src/product/entities/product.entity';
 @Controller('category')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}

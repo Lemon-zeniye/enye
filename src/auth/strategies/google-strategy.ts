@@ -11,8 +11,16 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: 'http://localhost:4000/api/auth/google/callback',
       scope: ['email', 'profile'],
-      prompt: 'select_account consent',
     });
+  }
+
+  // ✅ Force Google to always show account selection
+  authorizationParams(): Record<string, string> {
+    return {
+      prompt: 'select_account',
+      access_type: 'offline',
+      include_granted_scopes: 'true',
+    };
   }
 
   async validate(
@@ -23,7 +31,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   ): Promise<any> {
     try {
       const user = await this.authService.validateGoogleUser(profile);
-
       done(null, user);
     } catch (err) {
       done(err, false);

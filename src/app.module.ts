@@ -13,6 +13,8 @@ import { ChatModule } from './chat/chat.module';
 import { HeroModule } from './hero/hero.module';
 import { OrderModule } from './order/order.module';
 import { CartModule } from './cart/cart.module';
+import { BlogModule } from './blog/blog.module';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
@@ -33,6 +35,18 @@ import { CartModule } from './cart/cart.module';
         synchronize: true, // ❗ Disable in production
       }),
     }),
+    MailerModule.forRoot({
+      transport: {
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_APP_PASSWORD,
+        },
+      },
+      defaults: {
+        from: `"enyee" <${process.env.EMAIL_USER}>`,
+      },
+    }),
     UserModule,
     AuthModule,
     CategoryModule,
@@ -43,6 +57,7 @@ import { CartModule } from './cart/cart.module';
     HeroModule,
     OrderModule,
     CartModule,
+    BlogModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -90,15 +90,7 @@ export class ProductService {
   async findOne(id: number): Promise<Product> {
     const product = await this.productRepository.findOne({
       where: { id },
-      relations: [
-        'category',
-        'product_images',
-        'product_variants',
-        'product_variants.product_images',
-        'product_variants.variantAttributes',
-        'product_variants.variantAttributes.value', // 👈 load attribute value
-        'groups',
-      ],
+      relations: ['category', 'product_images'],
     });
 
     if (!product) {
@@ -200,15 +192,29 @@ export class ProductService {
     });
   }
 
-  async searchProducts(query: string): Promise<Product[]> {
-    return await this.productRepository
+  // product.service.ts
+  async searchProducts(
+    query: string,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{ products: Product[]; total: number; hasMore: boolean }> {
+    const skip = (page - 1) * limit;
+
+    const [products, total] = await this.productRepository
       .createQueryBuilder('product')
       .where('product.name ILIKE :query', { query: `%${query}%` })
       .orWhere('product.description ILIKE :query', { query: `%${query}%` })
       .andWhere('product.is_active = :isActive', { isActive: true })
       .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.product_images', 'product_images')
       .orderBy('product.created_at', 'DESC')
-      .getMany();
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    const hasMore = skip + products.length < total;
+
+    return { products, total, hasMore };
   }
 
   async getRelatedProducts(productId: number): Promise<Product[]> {
@@ -223,34 +229,47 @@ export class ProductService {
 
     let relatedProducts: Product[] = [];
 
-    // Try to get products from same category first
+    // Try to get random products from same category first
     if (currentProduct.category) {
-      relatedProducts = await this.productRepository.find({
-        where: {
-          category: { id: currentProduct.category.id },
-          is_active: true,
-          id: Not(productId),
-        },
-        relations: ['category', 'product_images'],
-        take: 8,
-        order: { created_at: 'DESC' },
-      });
+      relatedProducts = await this.productRepository
+        .createQueryBuilder('product')
+        .select('product') // Select the product entity
+        .addSelect('RANDOM()', 'random_value') // Add RANDOM() to SELECT
+        .where('product.categoryId = :categoryId', {
+          categoryId: currentProduct.category.id,
+        })
+        .andWhere('product.is_active = :isActive', { isActive: true })
+        .andWhere('product.id != :productId', { productId })
+        .leftJoinAndSelect('product.category', 'category')
+        .leftJoinAndSelect('product.product_images', 'product_images')
+        .orderBy('random_value', 'ASC') // Order by the random value
+        .take(10)
+        .getMany();
     }
 
-    // If not enough products from same category, fill with recent active products
-    if (relatedProducts.length < 8) {
-      const additionalProducts = await this.productRepository.find({
-        where: {
-          is_active: true,
-          id: Not(productId),
-          ...(relatedProducts.length > 0 && {
-            id: Not(In(relatedProducts.map((p) => p.id))),
-          }),
-        },
-        relations: ['category', 'product_images'],
-        take: 8 - relatedProducts.length,
-        order: { created_at: 'DESC' },
-      });
+    // If not enough products from same category, fill with random active products
+    if (relatedProducts.length < 10) {
+      const additionalNeeded = 10 - relatedProducts.length;
+
+      const additionalProducts = await this.productRepository
+        .createQueryBuilder('product')
+        .select('product')
+        .addSelect('RANDOM()', 'random_value')
+        .where('product.is_active = :isActive', { isActive: true })
+        .andWhere('product.id != :productId', { productId })
+        .andWhere(
+          relatedProducts.length > 0
+            ? 'product.id NOT IN (:...excludedIds)'
+            : '1=1',
+          {
+            excludedIds: relatedProducts.map((p) => p.id),
+          },
+        )
+        .leftJoinAndSelect('product.category', 'category')
+        .leftJoinAndSelect('product.product_images', 'product_images')
+        .orderBy('random_value', 'ASC')
+        .take(additionalNeeded)
+        .getMany();
 
       relatedProducts = [...relatedProducts, ...additionalProducts];
     }
@@ -258,6 +277,39 @@ export class ProductService {
     return relatedProducts;
   }
 
+  async findCategoryWithPaginatedProducts(
+    category_id: number,
+    page: number,
+    limit: number,
+  ) {
+    const category = await this.categoryRepository.findOne({
+      where: { id: category_id },
+    });
+
+    if (!category) {
+      throw new NotFoundException('Category Not Found!');
+    }
+
+    const [products, total] = await this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.product_images', 'product_images')
+      .where('product.category.id = :category_id', { category_id })
+      .andWhere('product.is_active = :isActive', { isActive: true })
+      .orderBy('product.created_at', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      category,
+      products,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
   // Variant methods
 
   async findVariant(variantId: number): Promise<ProductVariant> {

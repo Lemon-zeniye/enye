@@ -10,6 +10,7 @@ import { UserType } from '../enums/user-type.enum';
 import { Length, Min } from 'class-validator';
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { Order } from 'src/order/entities/order.entity';
+import { Address } from './address.entity';
 
 export enum SignupMethod {
   FORM = 'form',
@@ -45,6 +46,9 @@ export class User {
 
   @OneToMany(() => Order, (order) => order.user)
   orders: Order[];
+
+  @OneToMany(() => Address, (address) => address.user)
+  address: Address[];
 
   @Column({ nullable: true })
   @Length(10, 15)

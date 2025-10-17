@@ -195,7 +195,6 @@ export class GroupsService {
       .innerJoin('product.groups', 'group', 'group.id = :groupId', { groupId })
       .leftJoinAndSelect('product.category', 'category')
       .leftJoinAndSelect('product.product_images', 'product_images')
-      .leftJoinAndSelect('product.product_variants', 'product_variants')
       .where('product.is_active = :isActive', { isActive: true })
       .orderBy('product.created_at', 'DESC')
       .skip((page - 1) * limit)
